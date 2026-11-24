@@ -50,7 +50,8 @@ function renderShell(){
   const globalSearch=document.getElementById("global-search");if(globalSearch)globalSearch.addEventListener("input",e=>{searchTerm=e.target.value;renderContent()});
   const trashToggle=document.getElementById("trash-toggle");if(trashToggle)trashToggle.onclick=()=>{showTrash=!showTrash;activeSubject=null;renderShell()};
   const emptyTrash=document.getElementById("empty-trash");if(emptyTrash)emptyTrash.onclick=emptyTrashPermanently;
-  if(showTrash){document.getElementById("back-home").onclick=()=>{showTrash=false;chooseHomeGreeting();renderShell()};}
+  if(currentSection==="notes"){}
+  else if(showTrash){document.getElementById("back-home").onclick=()=>{showTrash=false;chooseHomeGreeting();renderShell()};}
   else if(homeView){
     document.getElementById("upload-file").onclick=uploadButton;
     document.getElementById("new-subject").onclick=()=>subjectDialog();
