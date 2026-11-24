@@ -163,7 +163,43 @@ function uploadButton(folderDirect=false){
 async function signedSummary(s){const {data,error}=await db.storage.from("resumenes").createSignedUrl(s.storage_path,300);if(error)throw error;return data.signedUrl}
 async function openSummary(id){const s=summaries.find(x=>x.id===id);try{const url=await signedSummary(s);const response=await fetch(url);if(!response.ok)throw new Error("No se pudo abrir el resumen");const html=await response.text();const viewer=document.createElement("div");viewer.className="viewer";viewer.innerHTML='<header class="viewer-head"><strong>'+esc(s.title)+'</strong><button class="btn ghost" id="close-viewer">Cerrar ✕</button></header><iframe title="Resumen interactivo" sandbox="allow-scripts allow-forms allow-modals allow-popups" referrerpolicy="no-referrer"></iframe>';document.body.appendChild(viewer);viewer.querySelector("iframe").srcdoc=html;viewer.querySelector("#close-viewer").onclick=()=>viewer.remove()}catch(e){toast(e.message)}}
 async function downloadSummary(id){const s=summaries.find(x=>x.id===id);try{const {data,error}=await db.storage.from("resumenes").download(s.storage_path);if(error)throw error;const url=URL.createObjectURL(data),a=document.createElement("a");a.href=url;a.download=s.title+".html";a.click();URL.revokeObjectURL(url)}catch(e){toast(e.message)}}
-function summaryMenu(id){const s=summaries.find(x=>x.id===id);showModal(`<div class="modal-box"><h2>${esc(s.title)}</h2><div class="field"><label>Nombre del resumen</label><input id="rename-title" value="${esc(s.title)}"></div><div class="field"><label>Mover a otra materia</label><select id="move-subject">${subjects.map(x=>`<option value="${x.id}" ${x.id===s.subject_id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></div><div class="modal-actions" style="justify-content:space-between"><button class="btn danger" id="delete-summary">Eliminar</button><span><button class="btn ghost" id="cancel-summary">Cancelar</button> <button class="btn" id="save-summary">Guardar</button></span></div></div>`);document.getElementById("cancel-summary").onclick=closeModal;document.getElementById("save-summary").onclick=async()=>{const title=document.getElementById("rename-title").value.trim(),subject_id=document.getElementById("move-subject").value;if(!title)return toast("El nombre no puede quedar vacío.");const {error}=await db.from("summaries").update({title,subject_id}).eq("id",id);if(error)return toast(error.message);closeModal();await refresh()};document.getElementById("delete-summary").onclick=async()=>{if(!confirm("¿Eliminar este resumen?"))return;const {error:storageError}=await db.storage.from("resumenes").remove([s.storage_path]);if(storageError)return toast(storageError.message);const {error}=await db.from("summaries").delete().eq("id",id);if(error)return toast(error.message);closeModal();toast("Resumen eliminado");await refresh()}}
+function summaryMenu(id){
+  const s=summaries.find(x=>x.id===id);
+  if(!s)return;
+  let chosenColor=s.color||colors[0];
+  showModal(`<div class="modal-box"><h2>${esc(s.title)}</h2>
+    <div class="field"><label>Nombre del resumen</label><input id="rename-title" value="${esc(s.title)}"></div>
+    <div class="field"><label>Mover a otra materia</label><select id="move-subject">${subjects.map(x=>`<option value="${x.id}" ${x.id===s.subject_id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></div>
+    <div class="field"><label>Color del resumen</label><div class="color-row summary-color-row">${colors.map((color,i)=>`<button type="button" class="color-choice ${color===chosenColor?"selected":""}" data-edit-summary-color="${color}" style="background:${color}" aria-label="Elegir color ${i+1}" title="Color ${i+1}"></button>`).join("")}</div></div>
+    <div class="modal-actions" style="justify-content:space-between"><button class="btn danger" id="delete-summary">Eliminar</button><span><button class="btn ghost" id="cancel-summary">Cancelar</button> <button class="btn" id="save-summary">Guardar</button></span></div></div>`);
+  document.querySelectorAll("[data-edit-summary-color]").forEach(button=>button.onclick=()=>{
+    chosenColor=button.dataset.editSummaryColor;
+    document.querySelectorAll("[data-edit-summary-color]").forEach(item=>item.classList.toggle("selected",item===button));
+  });
+  document.getElementById("cancel-summary").onclick=closeModal;
+  document.getElementById("save-summary").onclick=async()=>{
+    const title=document.getElementById("rename-title").value.trim();
+    const subject_id=document.getElementById("move-subject").value;
+    if(!title)return toast("El nombre no puede quedar vacío.");
+    const button=document.getElementById("save-summary");
+    button.disabled=true;
+    const {error}=await db.from("summaries").update({title,subject_id,color:chosenColor}).eq("id",id);
+    if(error){button.disabled=false;return toast(error.message)}
+    closeModal();
+    toast("Resumen actualizado");
+    await refresh();
+  };
+  document.getElementById("delete-summary").onclick=async()=>{
+    if(!confirm("¿Eliminar este resumen?"))return;
+    const {error:storageError}=await db.storage.from("resumenes").remove([s.storage_path]);
+    if(storageError)return toast(storageError.message);
+    const {error}=await db.from("summaries").delete().eq("id",id);
+    if(error)return toast(error.message);
+    closeModal();
+    toast("Resumen eliminado");
+    await refresh();
+  };
+}
 let activeAuthUserId=null;
 function enterLibrary(user){if(!user)return;currentUser=user;if(activeAuthUserId===user.id)return;activeAuthUserId=user.id;renderShell();void refresh()}
 async function start(){
