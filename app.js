@@ -106,7 +106,8 @@ async function uploadSummaries(files,subjectId,summaryColor){
       subject_id:destination.id,
       uploaded_by:currentUser.id,
       title:file.name.replace(/\\.html?$/i,""),
-      storage_path:path
+      storage_path:path,
+      color:summaryColor||colors[0]
     });
     if(dbErr){
       console.error("Error registrando resumen:",file.name,dbErr);
