@@ -6,7 +6,7 @@ const app = document.getElementById("app");
 const modal = document.getElementById("modal");
 const modalContent = document.getElementById("modal-content");
 const toastEl = document.getElementById("toast");
-const colors = ["#eee7f8","#e4eff8","#e3f1e9","#fff0df","#f8e5eb","#e9edf8","#f5efd9"];
+const colors = ["#FADADD","#F8CFE0","#F7D6E8","#EADCF8","#DCCFF5","#D7DDFB","#D6E8FF","#CDEBF7","#C9F0EA","#D5F2D5","#E5F2C9","#F8F0C9","#FFE4C7","#FFD9B8","#F6D5C8","#E8DCCB","#DCE3E8","#E6D9F2"];
 let currentUser = null, subjects = [], summaries = [], activeSubject = null, viewMode = "grid", searchTerm = "";
 let toastTimer;
 
@@ -67,7 +67,7 @@ function renderContent(){
   if(q)list=list.filter(s=>s.title.toLocaleLowerCase("es").includes(q)||(!activeSubject&&subjects.find(x=>x.id===s.subject_id)?.name.toLocaleLowerCase("es").includes(q)));
   list=[...list].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
   summaryBox.className="summary-grid "+(viewMode==="list"?"list-view":"");
-  summaryBox.innerHTML=list.length?list.map(s=>`<article class="summary-card" data-open-summary="${s.id}" style="--summary-color:${esc(subjects.find(x=>x.id===s.subject_id)?.color||colors[0])}"><div class="file-icon">▤</div><div class="summary-copy"><h3>${esc(s.title)}</h3><p>${esc(subjects.find(x=>x.id===s.subject_id)?.name||"Materia")} · ${dateLabel(s.created_at)}</p></div><div class="summary-actions"><button class="btn secondary" data-download="${s.id}">Descargar</button><button class="btn ghost" data-summary-menu="${s.id}">···</button></div></article>`).join(""):'<div class="empty-state"><strong>No hay resúmenes para mostrar</strong>Cuando subas archivos HTML, van a aparecer acá.</div>';
+  summaryBox.innerHTML=list.length?list.map(s=>`<article class="summary-card" data-open-summary="${s.id}" style="--summary-color:${esc(s.color||colors[0])}"><div class="file-icon">▤</div><div class="summary-copy"><h3>${esc(s.title)}</h3><p>${esc(subjects.find(x=>x.id===s.subject_id)?.name||"Materia")} · ${dateLabel(s.created_at)}</p></div><div class="summary-actions"><button class="btn secondary" data-download="${s.id}">Descargar</button><button class="btn ghost" data-summary-menu="${s.id}">···</button></div></article>`).join(""):'<div class="empty-state"><strong>No hay resúmenes para mostrar</strong>Cuando subas archivos HTML, van a aparecer acá.</div>';
   summaryBox.querySelectorAll("[data-open-summary]").forEach(el=>el.addEventListener("click",e=>{if(e.target.closest("button"))return;openSummary(el.dataset.openSummary)}));
   summaryBox.querySelectorAll("[data-download]").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();downloadSummary(el.dataset.download)}));
   summaryBox.querySelectorAll("[data-summary-menu]").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();summaryMenu(el.dataset.summaryMenu)}));
@@ -79,7 +79,7 @@ function subjectDialog(subject=null){const editing=!!subject;let chosen=subject?
 document.querySelectorAll("[data-color]").forEach(b=>b.onclick=()=>{chosen=b.dataset.color;document.querySelectorAll("[data-color]").forEach(x=>x.classList.toggle("selected",x===b))});document.getElementById("cancel-modal").onclick=closeModal;
 document.getElementById("subject-form").onsubmit=async e=>{e.preventDefault();const f=e.currentTarget,button=f.querySelector("button[type=submit]");button.disabled=true;try{const name=f.elements.name.value.trim(),description=f.elements.description.value.trim(),file=f.elements.image.files[0];let subjectId=subject?.id;const payload={name,description,color:chosen};if(editing){const {error}=await db.from("subjects").update(payload).eq("id",subjectId);if(error)throw error}else{const {data,error}=await db.from("subjects").insert({...payload,owner_id:currentUser.id}).select("id").single();if(error)throw error;subjectId=data.id}if(file){const ext=file.name.split(".").pop().toLowerCase(),path=subjectId+"/"+crypto.randomUUID()+"."+ext;const {error:uploadError}=await db.storage.from("materias").upload(path,file,{upsert:false,contentType:file.type});if(uploadError)throw uploadError;const {error:updateError}=await db.from("subjects").update({image_path:path}).eq("id",subjectId);if(updateError)throw updateError}closeModal();toast("Materia guardada");await refresh()}catch(err){toast(err.message);button.disabled=false}}}
 function subjectMenu(id){const s=subjects.find(x=>x.id===id);showModal(`<div class="modal-box"><h2>${esc(s.name)}</h2><p class="muted">¿Qué querés hacer con esta materia?</p><div class="modal-actions" style="justify-content:space-between"><button class="btn danger" id="delete-subject">Eliminar</button><span><button class="btn ghost" id="close-menu">Cerrar</button> <button class="btn" id="edit-subject">Editar</button></span></div></div>`);document.getElementById("close-menu").onclick=closeModal;document.getElementById("edit-subject").onclick=()=>subjectDialog(s);document.getElementById("delete-subject").onclick=async()=>{if(!confirm("¿Eliminar la materia y sus resúmenes? Esta acción no se puede deshacer."))return;try{const paths=summaries.filter(x=>x.subject_id===id).map(x=>x.storage_path);if(paths.length){const {error}=await db.storage.from("resumenes").remove(paths);if(error)throw error}if(s.image_path)await db.storage.from("materias").remove([s.image_path]);const {error}=await db.from("subjects").delete().eq("id",id);if(error)throw error;activeSubject=null;closeModal();toast("Materia eliminada");await refresh()}catch(e){toast(e.message)}}}
-async function uploadSummaries(files,subjectId){
+async function uploadSummaries(files,subjectId,summaryColor){
   const destination=subjects.find(s=>s.id===subjectId);
   if(!destination){toast("Elegí una materia válida para guardar el archivo.");return}
   const selected=[...files];
@@ -140,18 +140,21 @@ function uploadButton(folderDirect=false){
   input.onchange=()=>{
     const files=[...input.files];
     if(!files.length)return;
-    if(folderDirect&&activeSubject){
-      void uploadSummaries(files,activeSubject.id);
-      return;
-    }
-    const options=subjects.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>').join('');
-    showModal('<div class="modal-box"><span class="eyebrow">Guardar resumen</span><h2>¿En qué materia?</h2><p class="muted">'+files.length+' archivo(s) seleccionado(s)</p><form id="destination-form"><div class="field"><label for="destination-subject">Elegí la materia</label><select id="destination-subject" required>'+options+'</select></div><div class="modal-actions"><button type="button" class="btn ghost" id="cancel-upload">Cancelar</button><button type="submit" class="btn">Continuar</button></div></form></div>');
+    const defaultSubject=folderDirect&&activeSubject?activeSubject.id:subjects[0].id;
+    const subjectOptions=subjects.map(s=>'<option value="'+esc(s.id)+'" '+(s.id===defaultSubject?'selected':'')+'>'+esc(s.name)+'</option>').join('');
+    const colorOptions=colors.map((color,i)=>'<button type="button" class="color-choice '+(i===0?'selected':'')+'" data-summary-color="'+color+'" style="background:'+color+'" aria-label="Color '+(i+1)+'" title="Color '+(i+1)+'"></button>').join('');
+    showModal('<div class="modal-box"><span class="eyebrow">Guardar resumen</span><h2>Personalizá tus archivos</h2><p class="muted">'+files.length+' archivo(s) seleccionado(s)</p><form id="destination-form">'+(folderDirect?'<input type="hidden" id="destination-subject" value="'+esc(defaultSubject)+'">':'<div class="field"><label for="destination-subject">Elegí la materia</label><select id="destination-subject" required>'+subjectOptions+'</select></div>')+'<div class="field"><label>Color de los resúmenes</label><div class="color-row summary-color-row">'+colorOptions+'</div><p class="muted color-help">Podés elegir un tono distinto para cada grupo de archivos que subas.</p></div><div class="modal-actions"><button type="button" class="btn ghost" id="cancel-upload">Cancelar</button><button type="submit" class="btn">Guardar archivos</button></div></form></div>');
+    let chosenColor=colors[0];
+    document.querySelectorAll("[data-summary-color]").forEach(button=>button.onclick=()=>{
+      chosenColor=button.dataset.summaryColor;
+      document.querySelectorAll("[data-summary-color]").forEach(item=>item.classList.toggle("selected",item===button));
+    });
     document.getElementById("cancel-upload").onclick=closeModal;
     document.getElementById("destination-form").onsubmit=e=>{
       e.preventDefault();
       const subjectId=document.getElementById("destination-subject").value;
       closeModal();
-      void uploadSummaries(files,subjectId);
+      void uploadSummaries(files,subjectId,chosenColor);
     };
   };
   input.click();
