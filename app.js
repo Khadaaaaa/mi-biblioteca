@@ -55,7 +55,7 @@ async function start(){
   db.auth.onAuthStateChange((event,session)=>{
     if(event==="SIGNED_OUT"||!session){activeAuthUserId=null;currentUser=null;subjects=[];summaries=[];activeSubject=null;renderLogin();return}
     currentUser=session.user;
-    if(event==="SIGNED_IN"||event==="INITIAL_SESSION")enterLibrary(session.user);
+    if(event==="SIGNED_IN"||event==="INITIAL_SESSION")setTimeout(()=>enterLibrary(session.user),0);
   });
   const {data,error}=await db.auth.getSession();
   if(error)throw error;
