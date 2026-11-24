@@ -12,3 +12,11 @@
 
 /* Herramientas de organización personal */
 .toolbar-select{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:12px;padding:11px 12px;max-width:190px}.summary-actions [data-favorite]{font-size:19px;line-height:1;min-width:38px;padding:7px}.summary-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.summary-tag{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.58);color:#51465d;font-size:10px;font-weight:700}.subject-icon-choices{display:flex;flex-wrap:wrap;gap:8px}.subject-icon-choice{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);font-size:20px}.subject-icon-choice.selected{outline:2px solid var(--accent);background:#eee7fa}.summary-card .summary-actions{flex-wrap:wrap}@media(max-width:760px){.toolbar-select{flex:1;max-width:none}.toolbar .search-wrap{flex-basis:100%}.summary-actions{gap:5px}}
+
+/* Tarjetas de subcarpetas */
+#subfolder-list{margin:0 0 28px}
+#subfolder-list .subject-card{background:var(--subject-color,#eee8f7);border-color:color-mix(in srgb,var(--subject-color,#eee8f7) 75%,#8b7897)}
+#subfolder-list .subject-cover{height:86px;background:transparent}
+#subfolder-list .subject-info{padding:13px 16px 16px}
+#subfolder-list .subject-info h3,#subfolder-list .subject-info p{color:#383044}
+#subfolder-list .subject-symbol{font-size:34px}
