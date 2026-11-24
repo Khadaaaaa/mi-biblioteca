@@ -68,7 +68,25 @@ function renderContent(){
   const fav=document.getElementById("favorites-list");if(fav){fav.className="summary-grid "+(viewMode==="list"?"list-view":"");fav.innerHTML=cards(filter(summaries.filter(s=>s.is_favorite)));bind(fav)}
   const opened=document.getElementById("recent-open-list");if(opened){opened.className="summary-grid "+(viewMode==="list"?"list-view":"");opened.innerHTML=cards(filter(summaries.filter(s=>s.last_opened_at).sort((a,b)=>new Date(b.last_opened_at)-new Date(a.last_opened_at)).slice(0,8)));bind(opened)}
 }
-async function loadData(){const [sr,rr]=await Promise.all([db.from("subjects").select("*").order("created_at",{ascending:false}),db.from("summaries").select("*").order("created_at",{ascending:false})]);if(sr.error)throw sr.error;if(rr.error)throw rr.error;subjects=sr.data||[];summaries=rr.data||[];await Promise.all(subjects.map(async s=>{if(s.image_path){const {data}=await db.storage.from("materias").createSignedUrl(s.image_path,3600);s._imageUrl=data?.signedUrl||""}}))}
+async function loadData(){
+  const [sr,rr]=await Promise.all([
+    db.from("subjects").select("*").order("created_at",{ascending:false}),
+    db.from("summaries").select("*").order("created_at",{ascending:false})
+  ]);
+  if(sr.error)throw sr.error;
+  if(rr.error)throw rr.error;
+  const previous=subjects;
+  subjects=sr.data||[];
+  summaries=rr.data||[];
+  await Promise.all(subjects.map(async s=>{
+    if(!s.image_path){s._imageUrl="";return}
+    const old=previous.find(x=>x.id===s.id)?._imageUrl;
+    if(old&&old.startsWith("blob:"))URL.revokeObjectURL(old);
+    const {data,error}=await db.storage.from("materias").download(s.image_path);
+    if(error){console.error("No se pudo descargar la portada:",s.name,s.image_path,error);s._imageUrl="";return}
+    s._imageUrl=URL.createObjectURL(data);
+  }));
+}
 async function refresh(){try{await loadData();renderShell()}catch(e){console.error(e);app.innerHTML=`<main class="app-shell"><h2>No pudimos cargar tu biblioteca</h2><p class="muted">${esc(e.message)}</p><button class="btn" onclick="location.reload()">Reintentar</button></main>`}}
 function subjectDialog(subject=null,parentId=null,onSaved=null){const editing=!!subject;let chosen=subject?.color||colors[0];let chosenIcon=subject?.icon||"✳";const subjectIcons=["✳","🩺","🧠","🫀","🫁","🦴","🧬","🔬","🧪","📚","🌸","🌷","🦋","⭐","🌈","💗","🍀","☀️"];showModal(`<div class="modal-box"><span class="eyebrow">${editing?"Editar":"Organizar"}</span><h2>${editing?"Editar materia":parentId?"Nueva subcarpeta":"Nueva materia"}</h2><form id="subject-form"><div class="field"><label>Nombre</label><input name="name" maxlength="80" required value="${esc(subject?.name||"")}" placeholder="Ej. Anatomía"></div><div class="field"><label>Descripción (opcional)</label><textarea name="description" rows="2" maxlength="240" placeholder="Un pequeño detalle sobre la materia…">${esc(subject?.description||"")}</textarea></div><div class="field"><label>Color</label><div class="color-row">${colors.map(c=>`<button type="button" class="color-choice ${c===chosen?"selected":""}" data-color="${c}" style="background:${c}" aria-label="Elegir color"></button>`).join("")}</div></div><div class="field"><label>Ícono de la materia</label><div class="subject-icon-choices">${subjectIcons.map(ic=>`<button type="button" class="subject-icon-choice ${ic===chosenIcon?"selected":""}" data-subject-icon="${ic}">${ic}</button>`).join("")}</div></div><div class="field"><label>Imagen de portada (opcional)</label><input type="file" name="image" accept="image/png,image/jpeg,image/webp"></div><div class="modal-actions"><button type="button" class="btn ghost" id="cancel-modal">Cancelar</button><button class="btn" type="submit">Guardar</button></div></form></div>`);
 document.querySelectorAll("[data-color]").forEach(b=>b.onclick=()=>{chosen=b.dataset.color;document.querySelectorAll("[data-color]").forEach(x=>x.classList.toggle("selected",x===b))});document.querySelectorAll("[data-subject-icon]").forEach(b=>b.onclick=()=>{chosenIcon=b.dataset.subjectIcon;document.querySelectorAll("[data-subject-icon]").forEach(x=>x.classList.toggle("selected",x===b))});document.getElementById("cancel-modal").onclick=closeModal;
