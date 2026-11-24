@@ -22,22 +22,57 @@ function medicalIllustration(){return `<svg class="medical-art" viewBox="0 0 420
 function renderLogin(){app.innerHTML=`<main class="login-wrap"><section class="login-art"><span class="eyebrow">Un espacio para aprender</span><h1>Mi Biblioteca<span style="color:var(--accent)">.</span></h1><p>Todos tus resúmenes, materias y apuntes interactivos en un solo lugar. Un espacio tranquilo para organizar lo que estás aprendiendo.</p>${medicalIllustration()}</section><section class="login-card"><span class="eyebrow">Bienvenida</span><h2>Ingresá a tu espacio</h2><p class="muted">Usá tu correo y contraseña para continuar.</p><form id="login-form"><div class="field"><label for="email">Correo electrónico</label><input id="email" name="email" type="email" autocomplete="username" placeholder="tu@correo.com" required></div><div class="field"><label for="password">Contraseña</label><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Tu contraseña" required></div><button class="btn full" type="submit">Ingresar a mi biblioteca</button><p id="login-error" class="muted" role="alert"></p></form></section></main>`;
 document.getElementById("login-form").addEventListener("submit",async e=>{e.preventDefault();const form=e.currentTarget,button=form.querySelector("button"),error=document.getElementById("login-error");button.disabled=true;button.textContent="Ingresando…";error.textContent="";try{const {data,error:err}=await db.auth.signInWithPassword({email:form.elements.email.value.trim(),password:form.elements.password.value});if(err)throw err;currentUser=data.user;if(!currentUser)throw new Error("Supabase inició sesión, pero no devolvió los datos del usuario.");enterLibrary(currentUser)}catch(err){console.error("Error al ingresar:",err);error.textContent=err.message==="Invalid login credentials"?"El correo o la contraseña no son correctos.":err.message;button.disabled=false;button.textContent="Ingresar a mi biblioteca"}})}
 
-function renderShell(){const email=currentUser.email||"";app.innerHTML=`<main class="app-shell"><header class="topbar"><div class="brand"><span class="brand-mark">✳</span>Mi Biblioteca</div><div class="top-actions"><span class="user-email muted">${esc(email)}</span><span class="avatar">${initials(email)}</span><button class="btn ghost" id="logout">Salir</button></div></header><section class="welcome"><div><span class="eyebrow">Tu espacio de estudio</span><h1>Hola, ¡qué bueno verte!</h1><p>Todo lo que estás aprendiendo, organizado en un solo lugar.</p></div><button class="btn" id="upload-file">＋ Subir Archivo</button></section><div class="toolbar"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="global-search" placeholder="Buscar materias o resúmenes…" value="${esc(searchTerm)}"></div><button class="btn secondary" id="view-toggle" title="Cambiar vista">${viewMode==="grid"?"☷ Lista":"▦ Cuadrícula"}</button></div><section><div class="section-head"><h2>Mis materias</h2><span><span class="muted">${subjects.length} en total</span> <button class="btn secondary" id="new-subject">＋ Nueva materia</button></span></div><div id="subject-list" class="subject-grid"></div></section><section><div class="section-head"><h2>${activeSubject?esc(activeSubject.name):"Agregados recientemente"}</h2>${activeSubject?'<button class="btn ghost" id="back-home">← Todas las materias</button>':'<span class="muted">Lo último que subiste</span>'}</div><div id="summary-list" class="summary-grid ${viewMode==="list"?"list-view":""}"></div></section></main>`;
-document.getElementById("logout").onclick=async()=>{await db.auth.signOut()};
-document.getElementById("upload-file").onclick=uploadButton;
-document.getElementById("new-subject").onclick=()=>subjectDialog();
-document.getElementById("view-toggle").onclick=()=>{viewMode=viewMode==="grid"?"list":"grid";renderShell();renderContent()};
-document.getElementById("global-search").addEventListener("input",e=>{searchTerm=e.target.value;renderContent()});
-if(activeSubject){document.getElementById("back-home").onclick=()=>{activeSubject=null;renderShell();renderContent()};}
-renderContent()}
-function renderContent(){const subjectBox=document.getElementById("subject-list"),summaryBox=document.getElementById("summary-list");if(!subjectBox||!summaryBox)return;const q=searchTerm.toLocaleLowerCase("es");const filteredSubjects=subjects.filter(s=>s.name.toLocaleLowerCase("es").includes(q));subjectBox.innerHTML=filteredSubjects.length?filteredSubjects.map(s=>`<article class="subject-card" data-subject="${s.id}" style="--subject-color:${esc(s.color||colors[0])}"><button class="icon-btn card-menu" data-subject-menu="${s.id}" aria-label="Opciones">···</button><div class="subject-cover">${s.image_path?'<img src="'+esc(s._imageUrl||"")+'" alt="">':'<span class="subject-symbol">✳</span>'}</div><div class="subject-info"><h3>${esc(s.name)}</h3><p>${summaries.filter(x=>x.subject_id===s.id).length} resúmenes</p></div></article>`).join(""):'<div class="empty-state"><strong>Todavía no hay materias</strong>Creá tu primera materia para empezar a organizar tus resúmenes.</div>';
-subjectBox.querySelectorAll("[data-subject]").forEach(el=>el.addEventListener("click",e=>{if(e.target.closest("[data-subject-menu]"))return;activeSubject=subjects.find(s=>s.id===el.dataset.subject);renderShell()}));
-subjectBox.querySelectorAll("[data-subject-menu]").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();subjectMenu(el.dataset.subjectMenu)}));
-let list=activeSubject?summaries.filter(s=>s.subject_id===activeSubject.id):summaries;if(q)list=list.filter(s=>s.title.toLocaleLowerCase("es").includes(q)||subjects.find(x=>x.id===s.subject_id)?.name.toLocaleLowerCase("es").includes(q));list=[...list].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
-summaryBox.className="summary-grid "+(viewMode==="list"?"list-view":"");summaryBox.innerHTML=list.length?list.map(s=>`<article class="summary-card" data-open-summary="${s.id}"><div class="file-icon">▤</div><div class="summary-copy"><h3>${esc(s.title)}</h3><p>${esc(subjects.find(x=>x.id===s.subject_id)?.name||"Materia")} · ${dateLabel(s.created_at)}</p></div><div class="summary-actions"><button class="btn secondary" data-download="${s.id}">Descargar</button><button class="btn ghost" data-summary-menu="${s.id}">···</button></div></article>`).join(""):'<div class="empty-state"><strong>No hay resúmenes para mostrar</strong>Cuando subas archivos HTML, van a aparecer acá.</div>';
-summaryBox.querySelectorAll("[data-open-summary]").forEach(el=>el.addEventListener("click",e=>{if(e.target.closest("button"))return;openSummary(el.dataset.openSummary)}));
-summaryBox.querySelectorAll("[data-download]").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();downloadSummary(el.dataset.download)}));
-summaryBox.querySelectorAll("[data-summary-menu]").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();summaryMenu(el.dataset.summaryMenu)}))}
+const homeGreetings=[
+  ["¡Qué bueno verte de nuevo!","Tu espacio de estudio está listo para seguir creciendo."],
+  ["¡Vamos con un poquito más!","Tus materias y resúmenes te esperan."],
+  ["Un paso más en tu camino","Todo tu material de estudio, ordenado y a mano."],
+  ["¡Bienvenida a tu biblioteca!","Elegí una materia o seguí con lo último que estuviste estudiando."],
+  ["¡A seguir aprendiendo!","Cada resumen cuenta. Todo está acá, listo para vos."]
+];
+let currentHomeGreeting=homeGreetings[Math.floor(Math.random()*homeGreetings.length)];
+function chooseHomeGreeting(){currentHomeGreeting=homeGreetings[Math.floor(Math.random()*homeGreetings.length)]}
+function renderShell(){
+  const email=currentUser.email||"";
+  const homeView=!activeSubject;
+  const pageContent=homeView
+    ? `<section class="welcome"><div><span class="eyebrow">Tu espacio de estudio</span><h1>${currentHomeGreeting[0]}</h1><p>${currentHomeGreeting[1]}</p></div><button class="btn" id="upload-file">＋ Subir Archivo</button></section>
+      <section><div class="section-head"><h2>Mis materias</h2><span><span class="muted">${subjects.length} en total</span> <button class="btn secondary" id="new-subject">＋ Nueva materia</button></span></div><div id="subject-list" class="subject-grid"></div></section>
+      <section><div class="section-head"><h2>Agregados recientemente</h2><span class="muted">Lo último que subiste</span></div><div id="summary-list" class="summary-grid ${viewMode==="list"?"list-view":""}"></div></section>`
+    : `<section class="folder-page"><div class="folder-page-head"><div><button class="btn ghost" id="back-home">← Volver al inicio</button><span class="eyebrow">Materia</span><h1>${esc(activeSubject.name)}</h1><p>${esc(activeSubject.description||"Tus resúmenes de esta materia.")}</p><span class="muted">${summaries.filter(s=>s.subject_id===activeSubject.id).length} resúmenes</span></div><button class="btn" id="upload-folder-file">＋ Subir Archivo</button></div><div class="section-head"><h2>Todos los resúmenes</h2></div><div id="summary-list" class="summary-grid ${viewMode==="list"?"list-view":""}"></div></section>`;
+  app.innerHTML=`<main class="app-shell"><header class="topbar"><div class="brand"><span class="brand-mark">✳</span>Mi Biblioteca</div><div class="top-actions"><span class="user-email muted">${esc(email)}</span><span class="avatar">${initials(email)}</span><button class="btn ghost" id="logout">Salir</button></div></header><div class="toolbar"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="global-search" placeholder="Buscar materias o resúmenes…" value="${esc(searchTerm)}"></div><button class="btn secondary" id="view-toggle" title="Cambiar vista">${viewMode==="grid"?"☷ Lista":"▦ Cuadrícula"}</button></div>${pageContent}</main>`;
+  document.getElementById("logout").onclick=async()=>{await db.auth.signOut()};
+  document.getElementById("view-toggle").onclick=()=>{viewMode=viewMode==="grid"?"list":"grid";renderShell();renderContent()};
+  document.getElementById("global-search").addEventListener("input",e=>{searchTerm=e.target.value;renderContent()});
+  if(homeView){
+    document.getElementById("upload-file").onclick=uploadButton;
+    document.getElementById("new-subject").onclick=()=>subjectDialog();
+  }else{
+    document.getElementById("back-home").onclick=()=>{activeSubject=null;chooseHomeGreeting();renderShell();renderContent()};
+    document.getElementById("upload-folder-file").onclick=()=>uploadButton(true);
+  }
+  renderContent();
+}
+function renderContent(){
+  const subjectBox=document.getElementById("subject-list");
+  const summaryBox=document.getElementById("summary-list");
+  if(!summaryBox)return;
+  const q=searchTerm.toLocaleLowerCase("es");
+  if(subjectBox){
+    const filteredSubjects=subjects.filter(s=>s.name.toLocaleLowerCase("es").includes(q));
+    subjectBox.innerHTML=filteredSubjects.length?filteredSubjects.map(s=>`<article class="subject-card" data-subject="${s.id}" style="--subject-color:${esc(s.color||colors[0])}"><button class="icon-btn card-menu" data-subject-menu="${s.id}" aria-label="Opciones">···</button><div class="subject-cover">${s.image_path?'<img src="'+esc(s._imageUrl||"")+'" alt="">':'<span class="subject-symbol">✳</span>'}</div><div class="subject-info"><h3>${esc(s.name)}</h3><p>${summaries.filter(x=>x.subject_id===s.id).length} resúmenes</p></div></article>`).join(""):'<div class="empty-state"><strong>Todavía no hay materias</strong>Creá tu primera materia para empezar a organizar tus resúmenes.</div>';
+    subjectBox.querySelectorAll("[data-subject]").forEach(el=>el.addEventListener("click",e=>{if(e.target.closest("[data-subject-menu]"))return;activeSubject=subjects.find(s=>s.id===el.dataset.subject);renderShell()}));
+    subjectBox.querySelectorAll("[data-subject-menu]").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();subjectMenu(el.dataset.subjectMenu)}));
+  }
+  let list=activeSubject?summaries.filter(s=>s.subject_id===activeSubject.id):summaries;
+  if(q)list=list.filter(s=>s.title.toLocaleLowerCase("es").includes(q)||(!activeSubject&&subjects.find(x=>x.id===s.subject_id)?.name.toLocaleLowerCase("es").includes(q)));
+  list=[...list].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  summaryBox.className="summary-grid "+(viewMode==="list"?"list-view":"");
+  summaryBox.innerHTML=list.length?list.map(s=>`<article class="summary-card" data-open-summary="${s.id}"><div class="file-icon">▤</div><div class="summary-copy"><h3>${esc(s.title)}</h3><p>${esc(subjects.find(x=>x.id===s.subject_id)?.name||"Materia")} · ${dateLabel(s.created_at)}</p></div><div class="summary-actions"><button class="btn secondary" data-download="${s.id}">Descargar</button><button class="btn ghost" data-summary-menu="${s.id}">···</button></div></article>`).join(""):'<div class="empty-state"><strong>No hay resúmenes para mostrar</strong>Cuando subas archivos HTML, van a aparecer acá.</div>';
+  summaryBox.querySelectorAll("[data-open-summary]").forEach(el=>el.addEventListener("click",e=>{if(e.target.closest("button"))return;openSummary(el.dataset.openSummary)}));
+  summaryBox.querySelectorAll("[data-download]").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();downloadSummary(el.dataset.download)}));
+  summaryBox.querySelectorAll("[data-summary-menu]").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();summaryMenu(el.dataset.summaryMenu)}));
+}
+
 async function loadData(){const [sr,rr]=await Promise.all([db.from("subjects").select("*").order("created_at",{ascending:false}),db.from("summaries").select("*").order("created_at",{ascending:false})]);if(sr.error)throw sr.error;if(rr.error)throw rr.error;subjects=sr.data||[];summaries=rr.data||[];await Promise.all(subjects.map(async s=>{if(s.image_path){const {data}=await db.storage.from("materias").createSignedUrl(s.image_path,3600);s._imageUrl=data?.signedUrl||""}}))}
 async function refresh(){try{await loadData();renderShell()}catch(e){console.error(e);app.innerHTML=`<main class="app-shell"><h2>No pudimos cargar tu biblioteca</h2><p class="muted">${esc(e.message)}</p><button class="btn" onclick="location.reload()">Reintentar</button></main>`}}
 function subjectDialog(subject=null){const editing=!!subject;let chosen=subject?.color||colors[0];showModal(`<div class="modal-box"><span class="eyebrow">${editing?"Editar":"Organizar"}</span><h2>${editing?"Editar materia":"Nueva materia"}</h2><form id="subject-form"><div class="field"><label>Nombre</label><input name="name" maxlength="80" required value="${esc(subject?.name||"")}" placeholder="Ej. Anatomía"></div><div class="field"><label>Descripción (opcional)</label><textarea name="description" rows="2" maxlength="240" placeholder="Un pequeño detalle sobre la materia…">${esc(subject?.description||"")}</textarea></div><div class="field"><label>Color</label><div class="color-row">${colors.map(c=>`<button type="button" class="color-choice ${c===chosen?"selected":""}" data-color="${c}" style="background:${c}" aria-label="Elegir color"></button>`).join("")}</div></div><div class="field"><label>Imagen de portada (opcional)</label><input type="file" name="image" accept="image/png,image/jpeg,image/webp"></div><div class="modal-actions"><button type="button" class="btn ghost" id="cancel-modal">Cancelar</button><button class="btn" type="submit">Guardar</button></div></form></div>`);
@@ -96,7 +131,7 @@ async function uploadSummaries(files,subjectId){
     document.getElementById("close-upload-errors").onclick=closeModal;
   }
 }
-function uploadButton(){
+function uploadButton(folderDirect=false){
   if(!subjects.length){toast("Primero creá una materia para guardar tus archivos.");return}
   const input=document.createElement("input");
   input.type="file";
@@ -105,7 +140,11 @@ function uploadButton(){
   input.onchange=()=>{
     const files=[...input.files];
     if(!files.length)return;
-    const options=subjects.map(s=>'<option value="'+esc(s.id)+'" '+(activeSubject?.id===s.id?'selected':'')+'>'+esc(s.name)+'</option>').join('');
+    if(folderDirect&&activeSubject){
+      void uploadSummaries(files,activeSubject.id);
+      return;
+    }
+    const options=subjects.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>').join('');
     showModal('<div class="modal-box"><span class="eyebrow">Guardar resumen</span><h2>¿En qué materia?</h2><p class="muted">'+files.length+' archivo(s) seleccionado(s)</p><form id="destination-form"><div class="field"><label for="destination-subject">Elegí la materia</label><select id="destination-subject" required>'+options+'</select></div><div class="modal-actions"><button type="button" class="btn ghost" id="cancel-upload">Cancelar</button><button type="submit" class="btn">Continuar</button></div></form></div>');
     document.getElementById("cancel-upload").onclick=closeModal;
     document.getElementById("destination-form").onsubmit=e=>{
