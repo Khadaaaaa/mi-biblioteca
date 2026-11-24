@@ -43,7 +43,57 @@ function subjectDialog(subject=null){const editing=!!subject;let chosen=subject?
 document.querySelectorAll("[data-color]").forEach(b=>b.onclick=()=>{chosen=b.dataset.color;document.querySelectorAll("[data-color]").forEach(x=>x.classList.toggle("selected",x===b))});document.getElementById("cancel-modal").onclick=closeModal;
 document.getElementById("subject-form").onsubmit=async e=>{e.preventDefault();const f=e.currentTarget,button=f.querySelector("button[type=submit]");button.disabled=true;try{const name=f.elements.name.value.trim(),description=f.elements.description.value.trim(),file=f.elements.image.files[0];let subjectId=subject?.id;const payload={name,description,color:chosen};if(editing){const {error}=await db.from("subjects").update(payload).eq("id",subjectId);if(error)throw error}else{const {data,error}=await db.from("subjects").insert({...payload,owner_id:currentUser.id}).select("id").single();if(error)throw error;subjectId=data.id}if(file){const ext=file.name.split(".").pop().toLowerCase(),path=subjectId+"/"+crypto.randomUUID()+"."+ext;const {error:uploadError}=await db.storage.from("materias").upload(path,file,{upsert:false,contentType:file.type});if(uploadError)throw uploadError;const {error:updateError}=await db.from("subjects").update({image_path:path}).eq("id",subjectId);if(updateError)throw updateError}closeModal();toast("Materia guardada");await refresh()}catch(err){toast(err.message);button.disabled=false}}}
 function subjectMenu(id){const s=subjects.find(x=>x.id===id);showModal(`<div class="modal-box"><h2>${esc(s.name)}</h2><p class="muted">¿Qué querés hacer con esta materia?</p><div class="modal-actions" style="justify-content:space-between"><button class="btn danger" id="delete-subject">Eliminar</button><span><button class="btn ghost" id="close-menu">Cerrar</button> <button class="btn" id="edit-subject">Editar</button></span></div></div>`);document.getElementById("close-menu").onclick=closeModal;document.getElementById("edit-subject").onclick=()=>subjectDialog(s);document.getElementById("delete-subject").onclick=async()=>{if(!confirm("¿Eliminar la materia y sus resúmenes? Esta acción no se puede deshacer."))return;try{const paths=summaries.filter(x=>x.subject_id===id).map(x=>x.storage_path);if(paths.length){const {error}=await db.storage.from("resumenes").remove(paths);if(error)throw error}if(s.image_path)await db.storage.from("materias").remove([s.image_path]);const {error}=await db.from("subjects").delete().eq("id",id);if(error)throw error;activeSubject=null;closeModal();toast("Materia eliminada");await refresh()}catch(e){toast(e.message)}}}
-async function uploadSummaries(files){if(!activeSubject){toast("Primero abrí una materia.");return}for(const file of files){if(!file.name.toLowerCase().endsWith(".html")&&!file.name.toLowerCase().endsWith(".htm")){toast("Solo se permiten archivos HTML.");continue}if(file.size>20*1024*1024){toast(file.name+" supera el límite de 20 MB.");continue}const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,"_"),path=activeSubject.id+"/"+crypto.randomUUID()+"-"+safe;const {error:upErr}=await db.storage.from("resumenes").upload(path,file,{contentType:"text/html"});if(upErr){toast(upErr.message);continue}const {error:dbErr}=await db.from("summaries").insert({subject_id:activeSubject.id,uploaded_by:currentUser.id,title:file.name.replace(/\.html?$/i,""),storage_path:path});if(dbErr){await db.storage.from("resumenes").remove([path]);toast(dbErr.message)}}toast("Carga finalizada");await refresh()}
+async function uploadSummaries(files){
+  if(!activeSubject){toast("Primero abrí una materia.");return}
+  const selected=[...files];
+  let uploaded=0;
+  const failures=[];
+  for(const file of selected){
+    if(!file.name.toLowerCase().endsWith(".html")&&!file.name.toLowerCase().endsWith(".htm")){
+      failures.push(file.name+": solo se permiten archivos HTML.");
+      continue;
+    }
+    if(file.size>20*1024*1024){
+      failures.push(file.name+": supera el límite de 20 MB.");
+      continue;
+    }
+    const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+    const path=activeSubject.id+"/"+crypto.randomUUID()+"-"+safe;
+    const {data:uploadedFile,error:upErr}=await db.storage.from("resumenes").upload(path,file,{upsert:false,contentType:"text/html"});
+    if(upErr){
+      console.error("Error subiendo archivo a Storage:",file.name,upErr);
+      failures.push(file.name+": "+upErr.message);
+      continue;
+    }
+    const {error:dbErr}=await db.from("summaries").insert({
+      subject_id:activeSubject.id,
+      uploaded_by:currentUser.id,
+      title:file.name.replace(/\\.html?$/i,""),
+      storage_path:path
+    });
+    if(dbErr){
+      console.error("Error registrando resumen:",file.name,dbErr);
+      const {error:cleanupErr}=await db.storage.from("resumenes").remove([path]);
+      if(cleanupErr)console.error("No se pudo limpiar el archivo sin registro:",cleanupErr);
+      failures.push(file.name+": el archivo llegó a Storage, pero no se pudo registrar: "+dbErr.message);
+      continue;
+    }
+    uploaded++;
+  }
+  if(uploaded>0){
+    await refresh();
+    toast(failures.length
+      ? uploaded+" archivo(s) subido(s); "+failures.length+" con error. Revisá los detalles."
+      : uploaded+" archivo(s) subido(s) correctamente.");
+  }else{
+    toast("No se pudo subir ningún archivo. Revisá los errores.");
+  }
+  if(failures.length){
+    console.error("Errores durante la carga:",failures);
+    showModal('<div class="modal-box"><h2>Problemas al subir archivos</h2><ul>'+failures.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul><div class="modal-actions"><button class="btn" id="close-upload-errors">Cerrar</button></div></div>');
+    document.getElementById("close-upload-errors").onclick=closeModal;
+  }
+}
 function uploadButton(){const input=document.createElement("input");input.type="file";input.accept=".html,.htm,text/html";input.multiple=true;input.onchange=()=>uploadSummaries(input.files);input.click()}
 async function signedSummary(s){const {data,error}=await db.storage.from("resumenes").createSignedUrl(s.storage_path,300);if(error)throw error;return data.signedUrl}
 async function openSummary(id){const s=summaries.find(x=>x.id===id);try{const url=await signedSummary(s);const response=await fetch(url);if(!response.ok)throw new Error("No se pudo abrir el resumen");const html=await response.text();const viewer=document.createElement("div");viewer.className="viewer";viewer.innerHTML='<header class="viewer-head"><strong>'+esc(s.title)+'</strong><button class="btn ghost" id="close-viewer">Cerrar ✕</button></header><iframe title="Resumen interactivo" sandbox="allow-scripts allow-forms allow-modals allow-popups" referrerpolicy="no-referrer"></iframe>';document.body.appendChild(viewer);viewer.querySelector("iframe").srcdoc=html;viewer.querySelector("#close-viewer").onclick=()=>viewer.remove()}catch(e){toast(e.message)}}
