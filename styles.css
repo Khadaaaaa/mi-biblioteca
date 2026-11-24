@@ -20,3 +20,7 @@
 #subfolder-list .subject-info{padding:13px 16px 16px}
 #subfolder-list .subject-info h3,#subfolder-list .subject-info p{color:#383044}
 #subfolder-list .subject-symbol{font-size:34px}
+
+
+/* Indicador discreto del progreso de estudio */
+.study-status{display:inline-flex;align-items:center;margin-top:8px;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.62);color:#51465d;font-size:10px;font-weight:700}.study-status.status-en-estudio{background:#fff0cf;color:#805c20}.study-status.status-estudiado{background:#dff1e4;color:#356b48}
