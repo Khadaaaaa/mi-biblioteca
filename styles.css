@@ -53,3 +53,10 @@
 .academic-actions{white-space:nowrap}
 .academic-actions .btn{padding:7px 10px;font-size:12px}
 @media(max-width:760px){.app-layout{display:block}.side-nav{position:relative;height:auto;padding:12px 16px;border-right:0;border-bottom:1px solid var(--line);gap:12px}.side-nav>.brand{display:none}.side-nav nav{display:flex}.nav-item{justify-content:center;padding:10px}.side-nav-bottom{display:none}.app-layout>.app-shell{padding:18px 16px 45px}.mobile-brand{display:flex}.topbar{margin-bottom:22px}.notes-page>.section-head{align-items:flex-start;flex-direction:column}.academic-table th,.academic-table td{padding:11px 12px}}
+
+
+/* Ajuste de cuadrícula en escritorio: tarjetas con ancho contenido */
+@media(min-width:761px){
+  .summary-grid:not(.list-view){grid-template-columns:repeat(auto-fill,minmax(230px,280px));justify-content:start;align-items:start}
+  .summary-grid:not(.list-view) .summary-card{width:100%;min-height:190px}
+}
