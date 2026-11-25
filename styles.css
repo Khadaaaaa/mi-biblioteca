@@ -121,3 +121,10 @@
   .summary-card{padding:14px}
   .summary-card .summary-actions{margin-top:10px}
 }
+
+
+@media(max-width:760px){
+  .home-section-head{align-items:flex-start;flex-direction:column;gap:3px}
+  .home-section-head h2{width:100%}
+  .home-section-head>.muted{font-size:14px;line-height:1.45}
+}
