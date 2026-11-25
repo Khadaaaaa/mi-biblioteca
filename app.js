@@ -10,7 +10,7 @@ const colors = ["#FADADD","#F8CFE0","#F7D6E8","#EADCF8","#DCCFF5","#D7DDFB","#D6
 const savedSortMode = localStorage.getItem("miBibliotecaSortMode");
 const savedSidebarState = localStorage.getItem("miBibliotecaSidebarCollapsed");
 const validSortModes = ["newest","oldest","az","az-numeric","za","status"];
-let currentUser = null, subjects = [], summaries = [], academicRecords = [], activeSubject = null, viewMode = "grid", searchTerm = "", sortMode = validSortModes.includes(savedSortMode) ? savedSortMode : "newest", tagFilter = "", showTrash = false, currentSection = "library", sidebarCollapsed = savedSidebarState === "true";
+let currentUser = null, subjects = [], summaries = [], academicRecords = [], activeSubject = null, viewMode = "grid", searchTerm = "", sortMode = validSortModes.includes(savedSortMode) ? savedSortMode : "newest", tagFilter = "", showTrash = false, currentSection = "library", sidebarCollapsed = savedSidebarState === null ? true : savedSidebarState === "true";
 let toastTimer;
 
 function toast(message){toastEl.textContent=message;toastEl.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove("show"),2800)}
