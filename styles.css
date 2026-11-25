@@ -160,3 +160,6 @@
 
 /* El panel lateral comienza en el borde izquierdo de la ventana */
 @media(min-width:761px){.app-layout{max-width:none;margin:0}}
+
+/* El panel lateral acompaña toda la altura del contenido de la página */
+@media(min-width:761px){.side-nav{height:auto;min-height:100vh;align-self:stretch;position:relative}}
