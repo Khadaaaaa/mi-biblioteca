@@ -60,3 +60,6 @@
   .summary-grid:not(.list-view){grid-template-columns:repeat(auto-fill,minmax(230px,280px));justify-content:start;align-items:start}
   .summary-grid:not(.list-view) .summary-card{width:100%;min-height:190px}
 }
+
+/* La cuenta y el cierre de sesión se muestran solo en la barra superior */
+.side-nav-bottom{display:none!important}
