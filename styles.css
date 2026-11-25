@@ -71,7 +71,7 @@
 /* Menú lateral plegable en escritorio */
 @media(min-width:761px){
   .app-layout{grid-template-columns:230px minmax(0,1fr);transition:grid-template-columns .22s ease}
-  .side-nav{position:relative;transition:padding .22s ease;overflow:hidden;padding-right:52px}
+  .side-nav{position:relative;transition:padding .22s ease;overflow:hidden;padding-right:16px}.side-nav>.brand{white-space:nowrap;flex-wrap:nowrap;padding-right:38px}.side-nav>.brand .brand-mark{flex:none}
   .sidebar-toggle{position:absolute;top:29px;right:12px;width:30px;height:30px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--muted);font-size:20px;line-height:1;display:grid;place-items:center;cursor:pointer}
   .sidebar-toggle:hover{color:var(--accent-dark);border-color:var(--accent)}
   .app-layout.sidebar-collapsed{grid-template-columns:76px minmax(0,1fr)}
