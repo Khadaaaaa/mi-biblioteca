@@ -128,3 +128,10 @@
   .home-section-head h2{width:100%}
   .home-section-head>.muted{font-size:14px;line-height:1.45}
 }
+
+
+/* Sección de archivos plegable dentro de materias con subcarpetas */
+.folder-summaries-head{margin-top:26px}
+.folder-summaries-head h2{margin:0}
+.folder-summaries-head .btn{font-size:12px;padding:8px 12px}
+#summary-list.folder-summaries-collapsed{display:none}
