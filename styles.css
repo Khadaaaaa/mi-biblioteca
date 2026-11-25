@@ -66,3 +66,20 @@
 
 /* En escritorio, los datos de usuario y Salir quedan alineados a la derecha */
 @media(min-width:761px){.app-layout>.app-shell>.topbar{justify-content:flex-end}.app-layout>.app-shell>.topbar .top-actions{margin-left:auto}}
+
+
+/* Menú lateral plegable en escritorio */
+@media(min-width:761px){
+  .app-layout{grid-template-columns:230px minmax(0,1fr);transition:grid-template-columns .22s ease}
+  .side-nav{position:relative;transition:padding .22s ease;overflow:hidden}
+  .sidebar-toggle{position:absolute;top:29px;right:12px;width:30px;height:30px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--muted);font-size:20px;line-height:1;display:grid;place-items:center;cursor:pointer}
+  .sidebar-toggle:hover{color:var(--accent-dark);border-color:var(--accent)}
+  .app-layout.sidebar-collapsed{grid-template-columns:76px minmax(0,1fr)}
+  .sidebar-collapsed .side-nav{padding:72px 10px 20px;align-items:center}
+  .sidebar-collapsed .side-nav>.brand{display:none}
+  .sidebar-collapsed .side-nav nav{width:100%}
+  .sidebar-collapsed .nav-item{justify-content:center;padding:13px 8px;font-size:19px}
+  .sidebar-collapsed .nav-item span{display:none}
+  .sidebar-collapsed .sidebar-toggle{top:24px;right:23px}
+}
+@media(max-width:760px){.sidebar-toggle{display:none}}
