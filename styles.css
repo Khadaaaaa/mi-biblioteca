@@ -83,3 +83,11 @@
   .sidebar-collapsed .sidebar-toggle{top:24px;right:23px}
 }
 @media(max-width:760px){.sidebar-toggle{display:none}}
+
+
+/* Título breve del menú lateral */
+@media(min-width:761px){
+  .side-nav>.sidebar-brand{white-space:nowrap;padding-right:42px;font-size:18px;min-height:40px}
+  .side-nav>.sidebar-brand>span{display:block}
+  .sidebar-collapsed .side-nav>.sidebar-brand{display:none}
+}
