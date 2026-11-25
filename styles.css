@@ -148,3 +148,12 @@
 .visibility-icon{width:18px;height:18px;display:inline-block;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .password-toggle .visibility-icon{width:20px;height:20px}
 .folder-summaries-head .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+
+
+@media(max-width:760px){
+  .subjects-section-head{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:8px}
+  .subjects-section-head h2{white-space:nowrap;flex:0 0 auto;font-size:19px}
+  .subjects-section-head .subject-actions{display:flex;align-items:center;gap:8px;white-space:nowrap;min-width:0}
+  .subjects-section-head .subject-actions .muted{font-size:11px}
+  .subjects-section-head .subject-actions .btn{padding:9px 10px;font-size:12px;white-space:nowrap}
+}
