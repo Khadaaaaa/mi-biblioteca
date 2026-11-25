@@ -163,3 +163,8 @@
 
 /* El panel lateral acompaña toda la altura del contenido de la página */
 @media(min-width:761px){.side-nav{height:auto;min-height:100vh;align-self:stretch;position:relative}}
+
+/* Paleta ampliada: opciones ordenadas en una cuadrícula compacta */
+.color-row{display:grid;grid-template-columns:repeat(auto-fill,34px);gap:10px;align-items:center}
+.color-choice{width:34px;height:34px}
+@media(max-width:420px){.color-row{grid-template-columns:repeat(auto-fill,30px);gap:9px}.color-choice{width:30px;height:30px}}
