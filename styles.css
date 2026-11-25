@@ -157,3 +157,6 @@
   .subjects-section-head .subject-actions .muted{font-size:11px}
   .subjects-section-head .subject-actions .btn{padding:9px 10px;font-size:12px;white-space:nowrap}
 }
+
+/* El panel lateral comienza en el borde izquierdo de la ventana */
+@media(min-width:761px){.app-layout{max-width:none;margin:0}}
