@@ -91,3 +91,15 @@
   .side-nav>.sidebar-brand>span{display:block}
   .sidebar-collapsed .side-nav>.sidebar-brand{display:none}
 }
+
+
+/* Marca principal visible fuera del menú lateral */
+.page-brand{display:flex;flex:none}
+@media(min-width:761px){
+  .app-layout>.app-shell>.topbar{justify-content:space-between}
+  .app-layout>.app-shell>.topbar .top-actions{margin-left:auto}
+}
+@media(max-width:760px){
+  .page-brand{display:flex}
+  .topbar{justify-content:space-between}
+}
