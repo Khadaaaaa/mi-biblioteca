@@ -63,3 +63,6 @@
 
 /* La cuenta y el cierre de sesión se muestran solo en la barra superior */
 .side-nav-bottom{display:none!important}
+
+/* En escritorio, los datos de usuario y Salir quedan alineados a la derecha */
+@media(min-width:761px){.app-layout>.app-shell>.topbar{justify-content:flex-end}.app-layout>.app-shell>.topbar .top-actions{margin-left:auto}}
