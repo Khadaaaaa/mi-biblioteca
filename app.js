@@ -205,11 +205,22 @@ function academicRecordDialog(record=null){
   document.getElementById("cancel-record").onclick=closeModal;
   form.onsubmit=async e=>{e.preventDefault();const data={user_id:currentUser.id,subject:form.elements.subject.value.trim(),year:Number(form.elements.year.value),semester:Number(form.elements.semester.value),status:form.elements.status.value,grade:form.elements.grade.value===""?null:Number(form.elements.grade.value),updated_at:new Date().toISOString()};if(!data.subject)return toast("Ingresá el nombre de la materia.");const button=form.querySelector("button[type=submit]");button.disabled=true;const result=editing?await db.from("academic_records").update(data).eq("id",record.id):await db.from("academic_records").insert(data);if(result.error){button.disabled=false;return toast(result.error.message)}closeModal();toast(editing?"Materia actualizada":"Materia agregada");await refresh()};
 }
+function academicGradeLabel(grade){
+  if(grade===null||grade===undefined||grade==="")return "—";
+  const value=Number(grade);
+  if(!Number.isFinite(value))return "—";
+  if(value>=88)return "Excelente";
+  if(value>=80)return "Muy bueno";
+  if(value>=68)return "Bueno";
+  if(value>=60)return "Aceptable";
+  if(value>=20)return "Insuficiente";
+  return "Muy insuficiente";
+}
 function renderAcademicRecords(){
   const box=document.getElementById("academic-record-list");if(!box)return;
   if(!academicRecords.length){box.innerHTML='<div class="empty-state"><strong>Todavía no hay materias registradas</strong>Agregá la primera para empezar a llevar tus notas y estados.</div>';return}
   const groups=new Map();academicRecords.forEach(r=>{const key=r.year+"-"+r.semester;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(r)});
-  box.innerHTML=[...groups.entries()].map(([key,items])=>{const [year,semester]=key.split("-");return `<section class="academic-group"><div class="section-head"><h2>${year}º año · ${semester==="1"?"1er":"2do"} semestre</h2><span class="muted">${items.length} materias</span></div><div class="academic-table-wrap"><table class="academic-table"><thead><tr><th>Materia</th><th>Estado</th><th>Nota</th><th></th></tr></thead><tbody>${items.map(r=>`<tr><td>${esc(r.subject)}</td><td><span class="academic-status status-${r.status==="Aprobado"?"approved":r.status==="A examen"?"exam":r.status==="Cursando"?"studying":"pending"}">${esc(r.status)}</span></td><td>${r.grade===null||r.grade===undefined?"—":Number(r.grade)===100?'<span class="perfect-grade-value">100 🎉</span>':String(r.grade).replace(".",",")}</td><td class="academic-actions"><button class="btn ghost" data-edit-record="${r.id}">Editar</button><button class="btn ghost" data-delete-record="${r.id}">Eliminar</button></td></tr>`).join("")}</tbody></table></div></section>`}).join("");
+  box.innerHTML=[...groups.entries()].map(([key,items])=>{const [year,semester]=key.split("-");return `<section class="academic-group"><div class="section-head"><h2>${year}º año · ${semester==="1"?"1er":"2do"} semestre</h2><span class="muted">${items.length} materias</span></div><div class="academic-table-wrap"><table class="academic-table"><thead><tr><th>Materia</th><th>Estado</th><th>Nota</th><th>Calificación</th><th>Acciones</th></tr></thead><tbody>${items.map(r=>`<tr><td>${esc(r.subject)}</td><td><span class="academic-status status-${r.status==="Aprobado"?"approved":r.status==="A examen"?"exam":r.status==="Cursando"?"studying":"pending"}">${esc(r.status)}</span></td><td>${r.grade===null||r.grade===undefined?"—":Number(r.grade)===100?'<span class="perfect-grade-value">100 🎉</span>':String(r.grade).replace(".",",")}</td><td><span class="academic-grade-label">${esc(academicGradeLabel(r.grade))}</span></td><td class="academic-actions"><button class="btn ghost" data-edit-record="${r.id}">Editar</button><button class="btn ghost" data-delete-record="${r.id}">Eliminar</button></td></tr>`).join("")}</tbody></table></div></section>`}).join("");
   box.querySelectorAll("[data-edit-record]").forEach(b=>b.onclick=()=>academicRecordDialog(academicRecords.find(r=>r.id===b.dataset.editRecord)));
   box.querySelectorAll("[data-delete-record]").forEach(b=>b.onclick=async()=>{const r=academicRecords.find(x=>x.id===b.dataset.deleteRecord);if(!confirm("¿Eliminar "+r.subject+"?"))return;const {error}=await db.from("academic_records").delete().eq("id",r.id);if(error)return toast(error.message);toast("Materia eliminada");await refresh()});
 }
