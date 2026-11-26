@@ -211,3 +211,40 @@
 .academic-table th:last-child,.academic-table td.academic-actions{text-align:left!important}
 .academic-actions{min-width:0;white-space:nowrap}
 .academic-actions .btn{margin:0 5px 0 0}
+
+
+/* Tarjetas uniformes en las carpetas y subcarpetas */
+.folder-page #summary-list:not(.list-view) .summary-card{
+  height:184px;
+  min-height:184px;
+  display:flex;
+  flex-direction:column;
+}
+.folder-page #summary-list:not(.list-view) .summary-copy{
+  display:flex;
+  flex:1;
+  flex-direction:column;
+  min-height:0;
+  overflow:hidden;
+}
+.folder-page #summary-list:not(.list-view) .summary-copy h3{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:3;
+  overflow:hidden;
+}
+.folder-page #summary-list:not(.list-view) .summary-copy p{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  overflow:hidden;
+}
+.folder-page #summary-list:not(.list-view) .study-status{
+  align-self:flex-start;
+  margin-top:auto;
+  flex:none;
+}
+.folder-page #summary-list:not(.list-view) .summary-actions{
+  flex:none;
+  margin-top:10px;
+}
