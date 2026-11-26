@@ -178,3 +178,23 @@
 
 /* Opción para suavizar colores personalizados al estilo pastel */
 .pastel-toggle{display:flex;align-items:center;gap:8px;margin-top:9px;color:var(--muted);font-size:12px;cursor:pointer}.pastel-toggle input{accent-color:var(--accent);width:15px;height:15px;margin:0}
+
+
+/* Resaltado animado para las calificaciones perfectas */
+.academic-table tbody tr.grade-perfect{
+  background-image:linear-gradient(105deg,
+    rgba(65,151,255,.34) 0%,
+    rgba(132,91,226,.36) 35%,
+    rgba(218,91,176,.34) 68%,
+    rgba(255,105,116,.34) 100%);
+  background-size:200% 100%;
+  animation:perfect-grade-sweep 4.5s linear infinite alternate;
+}
+.academic-table tbody tr.grade-perfect td{color:#29243a;border-bottom-color:rgba(255,255,255,.24)}
+@keyframes perfect-grade-sweep{
+  from{background-position:100% 50%}
+  to{background-position:0% 50%}
+}
+@media(prefers-reduced-motion:reduce){
+  .academic-table tbody tr.grade-perfect{animation:none;background-position:50% 50%}
+}
