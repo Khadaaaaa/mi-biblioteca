@@ -181,20 +181,18 @@
 
 
 /* Resaltado animado para las calificaciones perfectas */
-.academic-table tbody tr.grade-perfect{
-  background-image:linear-gradient(105deg,
-    rgba(65,151,255,.34) 0%,
-    rgba(132,91,226,.36) 35%,
-    rgba(218,91,176,.34) 68%,
-    rgba(255,105,116,.34) 100%);
-  background-size:200% 100%;
-  animation:perfect-grade-sweep 4.5s linear infinite alternate;
+.academic-table tbody tr.grade-perfect td{
+  color:#211c30;
+  font-weight:600;
+  text-shadow:0 1px 1px rgba(255,255,255,.72);
+  background-image:linear-gradient(105deg,#b9ddff 0%,#c9c0ff 22%,#f0bce6 46%,#ffc5c5 68%,#b9ddff 100%);
+  background-size:300% 100%;
+  background-position:100% 50%;
+  animation:perfect-grade-sweep 3.2s ease-in-out infinite alternate;
+  border-bottom-color:rgba(255,255,255,.38);
 }
-.academic-table tbody tr.grade-perfect td{color:#29243a;border-bottom-color:rgba(255,255,255,.24)}
-@keyframes perfect-grade-sweep{
-  from{background-position:100% 50%}
-  to{background-position:0% 50%}
-}
+.academic-table tbody tr.grade-perfect td .academic-status{text-shadow:none}
+@keyframes perfect-grade-sweep{0%{background-position:100% 50%}100%{background-position:0% 50%}}
 @media(prefers-reduced-motion:reduce){
-  .academic-table tbody tr.grade-perfect{animation:none;background-position:50% 50%}
+  .academic-table tbody tr.grade-perfect td{animation:none;background-position:50% 50%}
 }
