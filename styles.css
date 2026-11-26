@@ -191,3 +191,11 @@
 @media(prefers-color-scheme:dark){
   .academic-table .perfect-grade-value{color:#65d99a}
 }
+
+
+/* Columna de calificación conceptual en el registro académico */
+.academic-grade-label{display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;background:var(--surface-2);color:var(--text);font-size:12px;font-weight:700;white-space:nowrap}
+.academic-actions{min-width:150px;text-align:right!important}
+.academic-actions .btn{margin-left:5px}
+.academic-table th:last-child{text-align:right}
+@media(max-width:760px){.academic-actions{min-width:150px}.academic-grade-label{font-size:11px;padding:5px 8px}}
