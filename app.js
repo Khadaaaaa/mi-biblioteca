@@ -65,18 +65,15 @@ function renderShell(){
   }
   renderContent();
 }
-function equalizeFolderCards(box){
-  if(!box||box.classList.contains("list-view"))return;
-  const cards=[...box.querySelectorAll(".summary-card")];
+function equalizeSummaryCards(){
+  const grids=[...app.querySelectorAll(".summary-grid:not(.list-view)")];
+  const cards=grids.flatMap(grid=>[...grid.querySelectorAll(".summary-card")]);
   if(!cards.length)return;
   cards.forEach(card=>card.style.height="auto");
   const maxHeight=Math.ceil(Math.max(...cards.map(card=>card.getBoundingClientRect().height)));
   cards.forEach(card=>card.style.height=maxHeight+"px");
 }
-window.addEventListener("resize",()=>{
-  const box=document.querySelector(".folder-page #summary-list");
-  if(box)requestAnimationFrame(()=>equalizeFolderCards(box));
-});
+window.addEventListener("resize",()=>requestAnimationFrame(equalizeSummaryCards));
 function renderContent(){
   if(currentSection==="notes"){renderAcademicRecords();return;}
   const subjectBox=document.getElementById("subject-list"),subfolderBox=document.getElementById("subfolder-list"),q=searchTerm.toLocaleLowerCase("es");
@@ -91,11 +88,12 @@ function renderContent(){
   const filter=(items,applySort=true)=>{let list=items.filter(s=>!s.deleted_at&&(!activeSubject||s.subject_id===activeSubject.id));if(q)list=list.filter(s=>s.title.toLocaleLowerCase("es").includes(q)||(s.tags||[]).some(t=>t.toLocaleLowerCase("es").includes(q))||(!activeSubject&&subjects.find(x=>x.id===s.subject_id)?.name.toLocaleLowerCase("es").includes(q)));if(tagFilter)list=list.filter(s=>(s.tags||[]).includes(tagFilter));if(sortMode==="filter-pending")list=list.filter(s=>(s.study_status||"Pendiente")==="Pendiente");if(sortMode==="filter-studying")list=list.filter(s=>(s.study_status||"Pendiente")==="En estudio");if(sortMode==="filter-studied")list=list.filter(s=>(s.study_status||"Pendiente")==="Estudiado");if(!applySort)return list;return list.sort((a,b)=>sortMode==="oldest"?new Date(a.created_at)-new Date(b.created_at):sortMode==="az-numeric"?a.title.localeCompare(b.title,"es",{numeric:true,sensitivity:"base"}):sortMode==="za"?b.title.localeCompare(a.title,"es",{numeric:true,sensitivity:"base"}):new Date(b.created_at)-new Date(a.created_at))};
   const cards=items=>{items=items.filter(s=>!s.deleted_at);return items.length?items.map(s=>`<article class="summary-card" data-open-summary="${s.id}" style="--summary-color:${esc(s.color||colors[0])}"><div class="summary-copy"><h3>${esc(s.title)}</h3><p>${esc(subjects.find(x=>x.id===s.subject_id)?.name||"Materia")} · ${dateLabel(s.created_at)}</p><div class="summary-tags">${(s.tags||[]).map(t=>'<span class="summary-tag">'+esc(t)+'</span>').join("")}</div><span class="study-status status-${(s.study_status||"Pendiente").toLowerCase().replace(" ","-")}">${esc(s.study_status||"Pendiente")}</span></div><div class="summary-actions"><button class="btn secondary" data-favorite="${s.id}" title="Favorito">${s.is_favorite?"★":"☆"}</button><button class="btn secondary" data-download="${s.id}">Descargar</button><button class="btn ghost" data-summary-menu="${s.id}">···</button></div></article>`).join(""):'<div class="empty-state">No hay resúmenes para mostrar.</div>'};
   const bind=box=>{if(!box)return;box.querySelectorAll("[data-open-summary]").forEach(el=>el.onclick=e=>{if(!e.target.closest("button"))openSummary(el.dataset.openSummary)});box.querySelectorAll("[data-download]").forEach(el=>el.onclick=e=>{e.stopPropagation();downloadSummary(el.dataset.download)});box.querySelectorAll("[data-summary-menu]").forEach(el=>el.onclick=e=>{e.stopPropagation();summaryMenu(el.dataset.summaryMenu)});box.querySelectorAll("[data-favorite]").forEach(el=>el.onclick=async e=>{e.stopPropagation();const s=summaries.find(x=>x.id===el.dataset.favorite),v=!s.is_favorite;const {error}=await db.from("summaries").update({is_favorite:v}).eq("id",s.id);if(error)return toast(error.message);s.is_favorite=v;renderContent()})};
-  const recent=document.getElementById("summary-list");if(recent){recent.className="summary-grid "+(viewMode==="list"?"list-view":"");const visibleSummaries=filter(summaries);recent.innerHTML=cards(activeSubject?visibleSummaries:visibleSummaries.slice(0,2));bind(recent);if(activeSubject)requestAnimationFrame(()=>equalizeFolderCards(recent))}
+  const recent=document.getElementById("summary-list");if(recent){recent.className="summary-grid "+(viewMode==="list"?"list-view":"");const visibleSummaries=filter(summaries);recent.innerHTML=cards(activeSubject?visibleSummaries:visibleSummaries.slice(0,2));bind(recent)}
   const fav=document.getElementById("favorites-list");if(fav){fav.className="summary-grid "+(viewMode==="list"?"list-view":"");fav.innerHTML=cards(filter(summaries.filter(s=>s.is_favorite)));bind(fav)}
   const latestOpened=summaries.filter(s=>!s.deleted_at&&s.last_opened_at).sort((a,b)=>new Date(b.last_opened_at)-new Date(a.last_opened_at));
   const continueBox=document.getElementById("continue-study-list");if(continueBox){continueBox.className="summary-grid "+(viewMode==="list"?"list-view":"");continueBox.innerHTML=cards(latestOpened.slice(0,1));bind(continueBox);const timeLabel=document.getElementById("continue-time");if(timeLabel)timeLabel.textContent=latestOpened[0]?"Última vez: "+new Intl.DateTimeFormat("es-UY",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}).format(new Date(latestOpened[0].last_opened_at)):"Todavía no abriste ningún resumen";}
   const opened=document.getElementById("recent-open-list");if(opened){opened.className="summary-grid "+(viewMode==="list"?"list-view":"");opened.innerHTML=cards(filter(latestOpened.slice(1,3),false));bind(opened)}
+  requestAnimationFrame(equalizeSummaryCards);
 }
 async function loadData(){
   const [sr,rr,ar]=await Promise.all([
