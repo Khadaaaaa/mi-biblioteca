@@ -248,3 +248,25 @@
   flex:none;
   margin-top:10px;
 }
+
+
+/* Altura dinámica compartida: las tarjetas de carpetas se adaptan al contenido más alto */
+.folder-page #summary-list:not(.list-view) .summary-card{
+  height:auto;
+  min-height:0;
+}
+.folder-page #summary-list:not(.list-view) .summary-copy{
+  overflow:visible;
+}
+.folder-page #summary-list:not(.list-view) .summary-copy h3{
+  display:block;
+  -webkit-line-clamp:unset;
+  overflow:visible;
+  overflow-wrap:anywhere;
+}
+.folder-page #summary-list:not(.list-view) .summary-copy p{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  overflow:hidden;
+}
