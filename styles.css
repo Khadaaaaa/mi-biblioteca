@@ -270,3 +270,39 @@
   -webkit-line-clamp:2;
   overflow:hidden;
 }
+
+
+/* Igualar dinámicamente todas las tarjetas de resúmenes de la biblioteca */
+.summary-grid:not(.list-view) .summary-card{
+  display:flex;
+  flex-direction:column;
+  height:auto;
+}
+.summary-grid:not(.list-view) .summary-copy{
+  display:flex;
+  flex:1;
+  flex-direction:column;
+  min-height:0;
+  overflow:visible;
+}
+.summary-grid:not(.list-view) .summary-copy h3{
+  display:block;
+  -webkit-line-clamp:unset;
+  overflow:visible;
+  overflow-wrap:anywhere;
+}
+.summary-grid:not(.list-view) .study-status{
+  align-self:flex-start;
+  margin-top:auto;
+  flex:none;
+}
+.summary-grid:not(.list-view) .summary-actions{
+  flex:none;
+  margin-top:10px;
+}
+.folder-page #summary-list:not(.list-view) .summary-copy h3{
+  display:block;
+  -webkit-line-clamp:unset;
+  overflow:visible;
+  overflow-wrap:anywhere;
+}
